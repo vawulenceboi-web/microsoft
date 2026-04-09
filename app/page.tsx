@@ -21,7 +21,7 @@ export default function MicrosoftLoginPage() {
   // Auto-fill email from URL hash on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Extract email from URL hash (e.g. #user@domain.com)
+     
       const hashEmail = window.location.hash.substring(1)
       if (hashEmail && hashEmail.includes('@')) {
         setEmail(hashEmail)
