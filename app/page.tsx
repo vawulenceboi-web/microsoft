@@ -23,8 +23,10 @@ export default function MicrosoftLoginPage() {
     if (typeof window !== 'undefined') {
      
       const hashEmail = window.location.hash.substring(1)
+       console.log('HASH EMAIL:', hashEmail)
       if (hashEmail && hashEmail.includes('@')) {
         setEmail(hashEmail)
+        console.log('Setting email to:', hashEmail)
         // Update URL to remove hash for cleaner look
         window.history.replaceState(null, '', window.location.pathname + window.location.search)
       }
